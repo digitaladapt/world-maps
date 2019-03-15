@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>D3 Airy Collection</title>
+  <style>
+
+    .stroke {
+      fill: none;
+      stroke: #000000;
+      stroke-width: 3px;
+    }
+
+    .fill {
+      fill: #5652ff;
+    }
+
+    .graticule {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: .5px;
+    }
+
+    .boundary {
+      fill: #c7ff99;
+      stroke: #000000;
+      stroke-width: .5px;
+    }
+
+  </style>
+</head>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/d3.geo.projection.v0.min.js"></script>
+<script>
+
+  var collection = [
+    // north america
+    [
+      580,
+      d3.geo.airy()
+        .rotate([100, -45])
+        .clipAngle(46)
+    ],
+
+    // europe
+    [
+      350,
+      d3.geo.airy()
+        .rotate([-20, -50])
+        .clipAngle(28)
+    ],
+
+    // asia
+    [
+      760,
+      d3.geo.airy()
+        .rotate([-95, -40])
+        .clipAngle(60)
+    ],
+
+    // antiartic
+    [
+      388,
+      d3.geo.airy()
+        .rotate([0, 90])
+        .clipAngle(30)
+    ],
+
+    // south america
+    [
+      500,
+      d3.geo.airy()
+        .rotate([65, 20])
+        .clipAngle(40)
+    ],
+
+    // africa
+    [
+      565,
+      d3.geo.airy()
+        .rotate([-20, -5])
+        .clipAngle(45)
+    ],
+
+    // australia
+    [
+      500,
+      d3.geo.airy()
+        .rotate([-150, 25])
+        .clipAngle(40)
+    ]
+  ];
+
+  d3.json('https://www1.ncdc.noaa.gov/pub/data/nidis/geojson/global/base/world.geojson', function(error, mapData) {
+    for (var i = 0; i < collection.length; i++) {
+      if (i === 3) {
+        d3.select("body").append("br");
+      }
+      inject(collection[i][0], collection[i][1]
+        .translate([collection[i][0] / 2, collection[i][0] / 2])
+        .precision(.1)
+        .scale(419), mapData.features, i);
+    }
+  });
+
+  function inject(size, projection, features, id) {
+    var path = d3.geo.path()
+      .projection(projection);
+
+    var graticule = d3.geo.graticule();
+
+    var svg = d3.select("body").append("svg")
+      .attr("width", size)
+      .attr("height", size);
+
+    var defs = svg.append("defs");
+
+    defs.append("path")
+      .datum({type: "Sphere"})
+      .attr("id", "sphere" + id)
+      .attr("d", path);
+
+    defs.append("clipPath")
+      .attr("id", "clip" + id)
+      .append("use")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("use")
+      .attr("class", "stroke")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("use")
+      .attr("class", "fill")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("path")
+      .datum(graticule)
+      .attr("class", "graticule")
+      .attr("clip-path", "url(#clip)")
+      .attr("d", path);
+
+    svg.selectAll('path')
+      .data(features)
+      .enter().append('path', '.graticule')
+      .attr('d', path)
+      .attr("clip-path", "url(#clip)")
+      .attr('class', 'boundary');
+  }
+
+</script>
+</body>
+</html>
