@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>D3 Airy Collection</title>
+  <style>
+
+    .stroke {
+      fill: none;
+      stroke: #000000;
+      stroke-width: 3px;
+    }
+
+    .fill {
+      fill: #5652ff;
+    }
+
+    .graticule {
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: .5px;
+    }
+
+    .boundary {
+      fill: #c7ff99;
+      stroke: #000000;
+      stroke-width: .5px;
+    }
+
+  </style>
+</head>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/d3.geo.projection.v0.min.js"></script>
+<script>
+
+  var collection = [
+    // north america
+    [
+      580,
+      d3.geo.airy()
+        .rotate([100, -45])
+        .clipAngle(46),
+      "position: absolute; left: 154px; top: 164px;"
+    ],
+
+    // europe
+    [
+      350,
+      d3.geo.airy()
+        .rotate([-20, -50])
+        .clipAngle(28),
+      "position: absolute; left: 696px; top: 455px;"
+    ],
+
+    // asia
+    [
+      755,
+      d3.geo.airy()
+        .rotate([-95, -40])
+        .clipAngle(60),
+      "position: absolute; left: 985px; top: 0;"
+    ],
+
+    // antiartic
+    [
+      375,
+      d3.geo.airy()
+        .rotate([0, 90])
+        .clipAngle(30),
+      "position: absolute; left: 0; top: 667px;"
+    ],
+
+    // south america
+    [
+      500,
+      d3.geo.airy()
+        .rotate([65, 20])
+        .clipAngle(40),
+      "position: absolute; left: 361px; top: 715px;"
+    ],
+
+    // africa
+    [
+      565,
+      d3.geo.airy()
+        .rotate([-20, -5])
+        .clipAngle(45),
+      "position: absolute; left: 859px; top: 715px;"
+    ],
+
+    // australia
+    [
+      440,
+      d3.geo.airy()
+        .rotate([-140, 28])
+        .clipAngle(35),
+      "position: absolute; left: 1412px; top: 689px;"
+    ]
+  ];
+
+  d3.json('https://www1.ncdc.noaa.gov/pub/data/nidis/geojson/global/base/world.geojson', function(error, mapData) {
+    for (var i = 0; i < collection.length; i++) {
+      inject(
+        collection[i][0],
+        collection[i][1]
+          .translate([collection[i][0] / 2, collection[i][0] / 2])
+          .precision(.1)
+          .scale(419),
+        mapData.features,
+        i,
+        collection[i][2]
+      );
+    }
+  });
+
+  function inject(size, projection, features, id, placement) {
+    var path = d3.geo.path()
+      .projection(projection);
+
+    var graticule = d3.geo.graticule();
+
+    var svg = d3.select("#map-container").append("svg")
+      .attr("width", size)
+      .attr("height", size)
+      .attr("style", placement);
+
+    var defs = svg.append("defs");
+
+    defs.append("path")
+      .datum({type: "Sphere"})
+      .attr("id", "sphere" + id)
+      .attr("d", path);
+
+    defs.append("clipPath")
+      .attr("id", "clip" + id)
+      .append("use")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("use")
+      .attr("class", "stroke")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("use")
+      .attr("class", "fill")
+      .attr("xlink:href", "#sphere" + id);
+
+    svg.append("path")
+      .datum(graticule)
+      .attr("class", "graticule")
+      .attr("clip-path", "url(#clip)")
+      .attr("d", path);
+
+    svg.selectAll('path')
+      .data(features)
+      .enter().append('path', '.graticule')
+      .attr('d', path)
+      .attr("clip-path", "url(#clip)")
+      .attr('class', 'boundary');
+  }
+
+</script>
+<div id="map-container" style="position: relative; height: 1280px; width: 1852px; margin: auto;"></div>
+</body>
+</html>
